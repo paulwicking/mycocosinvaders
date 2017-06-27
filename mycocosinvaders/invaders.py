@@ -14,8 +14,8 @@ from pyglet.image import load, ImageGrid, Animation
 
 
 class Actor(cocos.sprite.Sprite):
-    """
-    The Actor class represent all player and non-player actors in the game.
+    """ The Actor class represents all player and non-player actors in the game.
+
     """
     def __init__(self, image, x, y):
         super(Actor, self).__init__(image)
@@ -23,10 +23,11 @@ class Actor(cocos.sprite.Sprite):
         self.cshape = cm.AARectShape(self.position, self.width * 0.5, self.height * 0.5)
 
     def move(self, offset):
-        """
-        Moves the actor.
+        """ Moves the actor.
+
         :param offset:
         :return:
+
         """
         self.position += offset
         self.cshape.center += offset
@@ -39,8 +40,8 @@ class Actor(cocos.sprite.Sprite):
 
 
 class PlayerCannon(Actor):
-    """
-    Player controlled actor behavior.
+    """ Player controlled actor behavior.
+
     """
     KEYS_PRESSED = defaultdict(int)
 
@@ -55,6 +56,10 @@ class PlayerCannon(Actor):
             self.parent.add(PlayerShoot(self.x, self.y + 50))
 
         movement = pressed[key.RIGHT] - pressed[key.LEFT]
+
+        # For some reason, the PlayerCannon object can be sent out of the screen if the following if-statement is here.
+        # It shouldn't be there according to the example, however, removing it makes the PlayerCannon object "stick"
+        # to the edge of the screen.
         if movement != 0:
             self.move(self.speed * movement * elapsed)
 
@@ -68,12 +73,14 @@ class PlayerCannon(Actor):
 
 
 class GameLayer(cocos.layer.Layer):
-    """
+    """ Main game loop logic.
+
     Keeps track of player lives left and current score.
     Handles input key events.
     Creates the game actors and adds them as child nodes.
     Runs the game loop by executing a scheduled function for each frame where the collisions are processed and
     the object positions are updated.
+
     """
     is_event_handler = True
 
@@ -100,45 +107,50 @@ class GameLayer(cocos.layer.Layer):
         self.schedule(self.update)
 
     def create_player(self):
-        """
+        """ Add the PlayerCannon object.
+
         :return: Creates a PlayerCannon object in the center of the screen.
+
         """
         self.player = PlayerCannon(self.width * 0.5, 50)
         self.add(self.player)
         self.hud.update_lives(self.lives)
 
     def update_score(self, score=0):
-        """
-        Increments score for each alien destroyed.
+        """ Increments score for each alien destroyed.
+
         :param score: Initial score value is 0.
         :return:
+
         """
         self.score += score
         self.hud.update_score(self.score)
 
     def create_alien_group(self, x, y):
-        """
-        Initializes the rows of descending aliens by creating a new alien group and adding all enemies to the layer as
-        child nodes.
+        """ Initializes the rows of descending aliens.
+
+        Creates a new alien group and adds all enemies to the layer as child nodes.
         :param x: x coordinate
         :param y: y coordinate
         :return:
+
         """
         self.alien_group = AlienGroup(x, y)
         for alien in self.alien_group:
             self.add(alien)
 
     def update(self, dt):
-        """
-        Callback method that will be scheduled for execution each frame.
+        """ Callback method that will be scheduled for execution each frame.
+
         :param dt: DeltaTime value.
         :return:
+
         """
         self.collman.clear()
         for _, node in self.children:
             self.collman.add(node)
             if not self.collman.knows(node):
-                self.remove(node)
+                self.remove(node)  ## TODO: Figure out why this removes PlayerCannon when out of bounds
 
         self.collide(PlayerShoot.INSTANCE)
         if self.collide(self.player):
@@ -156,10 +168,11 @@ class GameLayer(cocos.layer.Layer):
             self.add(MysteryShip(50, self.height - 50))
 
     def collide(self, node):
-        """
-        Encapsulates the call to iter_colliding and checks if the node is a reference to a valid object.
+        """ Encapsulates the call to iter_colliding and checks if the node is a reference to a valid object.
+
         :param node:
         :return:
+
         """
         if node is not None:
             for other in self.collman.iter_colliding(node):
@@ -168,10 +181,11 @@ class GameLayer(cocos.layer.Layer):
         return False
 
     def respawn_player(self):
-        """
-        Updates player lives and respawns player by calling create_player() while there are more than 0 lives left.
+        """  Updates player lives and respawns player by calling create_player() while there are more than 0 lives left.
+
         Stops gameplay by unscheduling update when there are no lives left.
         :return:
+
         """
         self.lives -= 1
         if self.lives < 0:
@@ -182,8 +196,8 @@ class GameLayer(cocos.layer.Layer):
 
 
 class HUD(cocos.layer.Layer):
-    """
-    Heads Up Display class. Holds current score and number of lives left.
+    """ Heads Up Display class. Holds current score and number of lives left.
+
     """
     def __init__(self):
         super(HUD, self).__init__()
@@ -194,7 +208,6 @@ class HUD(cocos.layer.Layer):
         self.lives_text.position = (w - 100, h - 40)
         self.add(self.score_text)
         self.add(self.lives_text)
-
 
     def update_score(self, score):
         self.score_text.element.text = 'Score: %s' % score
@@ -210,8 +223,8 @@ class HUD(cocos.layer.Layer):
 
 
 class Alien(Actor):
-    """
-    Non player character behavior.
+    """ Non player character behavior.
+
     """
     def load_animation(image):
         seq = ImageGrid(load(image), 2, 1)
@@ -239,8 +252,8 @@ class Alien(Actor):
 
 
 class MysteryShip(Alien):
-    """
-    Mysterious ship that appears randomly at top of screen.
+    """ Mysterious ship that appears randomly at top of screen.
+
     """
     SCORES = [10, 50, 100, 200]
 
@@ -260,9 +273,10 @@ class AlienColumn(object):
                        for i, alien in alien_types]
 
     def should_turn(self, d):
-        """
-        Checks if the column has reached the side of the screen in current direction.
+        """ Checks if the column has reached the side of the screen in current direction.
+
         :returns False if there are no aliens left in the column.
+
         """
         if len(self.aliens) == 0:
             return False
@@ -290,10 +304,11 @@ class AlienGroup(object):
         self.period = 1.0
 
     def update(self, elapsed):
-        """
-        Sums the elapsed times between frames, and moves whole group down or sideways after a certain period.
+        """ Sums the elapsed times between frames, and moves whole group down or sideways after a certain period.
+
         :param elapsed:
         :return:
+
         """
         self.elapsed += elapsed
         while self.elapsed >= self.period:
@@ -309,9 +324,10 @@ class AlienGroup(object):
         return any(map(lambda c: c.should_turn(self.direction), self.columns))
 
     def __iter__(self):
-        """
-        Lets us call for alien in alien_group in rest of code.
+        """ Lets us call for alien in alien_group in rest of code.
+
         :return:
+
         """
         for column in self.columns:
             for alien in column.aliens:

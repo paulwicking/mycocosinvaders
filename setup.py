@@ -16,4 +16,4 @@ config = {
 	'name': 'mycocosinvaders'
 }
 
-setup(**config)
+setup(**config, install_requires=['pyglet'])
